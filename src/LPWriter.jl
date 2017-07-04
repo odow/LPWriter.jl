@@ -27,6 +27,12 @@ function writelp(io::IO,
     if length(Q) != 0
         error("LP writer does not support Quadratic objective")
     end
+    if sense != :Max && sense != :Min
+        error("sense must be either :Min or :Max. Currently sense =$(sense).")
+    end
+    if length(sos) > 0
+        error("LP writer does not currently support SOS constraints")
+    end
 
     if sense == :Max
         println(io,"Maximize")
@@ -37,7 +43,7 @@ function writelp(io::IO,
     print_objective!(io, c, colnames)
     print_constraints!(io, A, rowlb, rowub, colnames, rownames)
     print_bounds!(io, collb, colub, colnames)
-    print_general!(io, colcat, colnames)
+    print_category!(io, colcat, colnames)
 
     println(io, "End")
 end
@@ -102,7 +108,11 @@ function print_constraints!(io, A, rowlb, rowub, colnames, rownames)
             print_variable_coefficient!(io, vals[j], colnames[cols[j]], is_first)
             is_first = false
         end
-        println(io, " $(row_sense[row]) $(rowub[row])")
+        if row_sense[row] == :(>=)
+            println(io, " $(row_sense[row]) $(rowlb[row])")
+        else
+            println(io, " $(row_sense[row]) $(rowub[row])")
+        end
     end
 end
 
@@ -121,22 +131,26 @@ function print_bounds!(io, collb, colub, colnames)
             if ub == Inf
                 print(io, "+inf")
             else
-                print_shortest(io, lb)
+                print_shortest(io, ub)
             end
             println(io)
         end
     end
 end
 
-function print_general!(io, colcat, colnames)
-    println(io, "General")
-    # Integer - don't handle binaries specially
+function print_category!(io, colcat, colnames)
+    if any(colcat .== :SemiCont) || any(colcat .== :SemiInt)
+        error("The LP file writer does not currently support semicontinuous or semi-integer variables")
+    end
+    println(io, "General")# Integer
     for (cat, name) in zip(colcat, colnames)
-        if cat == :Cont
-            continue
-        elseif (cat == :SemiCont || cat == :SemiInt)
-            error("The LP file writer does not currently support semicontinuous or semi-integer variables")
-        else
+        if cat == :Int
+            println(io, "$(name)")
+        end
+    end
+    println(io, "Binary")
+    for (cat, name) in zip(colcat, colnames)
+        if cat == :Bin
             println(io, "$(name)")
         end
     end
