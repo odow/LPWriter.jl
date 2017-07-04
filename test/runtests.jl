@@ -47,6 +47,16 @@ V8
 End
 """
 
+@testset "correctname" begin
+    # not very complete. Need better way to test
+    @test LPWriter.correctname(repeat("x", 256)) == repeat("x", 255)
+    @test LPWriter.correctname(".x") == "x"
+    @test LPWriter.correctname("0x") == "x"
+    @test LPWriter.correctname("x^") == "x"
+    @test LPWriter.correctname("x*ds") == "xds"
+    @test LPWriter.correctname("x*ds[1]") == "xds1"
+end
+
 @testset "verifyname" begin
     # not very complete. Need better way to test
     @test LPWriter.verifyname("x")

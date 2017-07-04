@@ -23,6 +23,24 @@ function verifyname(name::String)
     return true
 end
 
+function correctname(name::String)
+    if length(name) > 255
+        warn("Name $(name) too long. Truncating.")
+        return correctname(String(name[1:255]))
+    end
+    m = match(r"^([\.0-9])", name)
+    if !isa(m, Void)
+        warn("Name $(name) cannot start with a period or number. Removing from name.")
+        return correctname(replace(name, r"^([\.0-9])", ""))
+    end
+    m = match(r"([^a-zA-Z0-9\!\"\#\$\%\&\(\)\/\,\.\;\?\@\_\`\'\{\}\|\~])", name)
+    if !isa(m, Void)
+        warn("Name $(name) contains an illegal character. Removing from name.")
+        return correctname(replace(name, r"([^a-zA-Z0-9\!\"\#\$\%\&\(\)\/\,\.\;\?\@\_\`\'\{\}\|\~])", ""))
+    end
+    return name
+end
+
 function writelp(io::IO,
     A::AbstractMatrix,       # the constraint matrix
     collb::Vector,  # vector of variable lower bounds
@@ -38,21 +56,16 @@ function writelp(io::IO,
     colnames::Vector{String} = ["V$i" for i in 1:length(c)],
     rownames::Vector{String} = ["C$i" for i in 1:length(rowub)]
 )
-    for cname in colnames
+    for (i, cname) in enumerate(colnames)
         if !verifyname(cname)
-            error("Invalid variable name $(cname)")
+            colnames[i] = correctname(cname)
         end
     end
-    for rname in rownames
+    for (i, rname) in enumerate(rownames)
         if !verifyname(rname)
-            error("Invalid constraint name $(rname)")
+            rownames[i] = correctname(rname)
         end
     end
-
-    if !any(verifyname.(rownames))
-        error("Invalid row name")
-    end
-
     if length(Q) != 0
         error("LP writer does not support Quadratic objective")
     end
