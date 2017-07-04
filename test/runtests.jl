@@ -1,52 +1,6 @@
 using LPWriter
 using Base.Test
 
-const LPFILE = """Maximize
-obj: -1 V4 + 1 V5
-Subject To
-CON1: 1 V1 >= 0.0
-CON2: 1 V2 >= 2.0
-CON3: 1 V3 <= 2.5
-CON4: 1 V5 + 1 V6 + 1 V7 <= 1.0
-Bounds
--inf <= V1 <= 3
--inf <= V2 <= 3
--inf <= V3 <= 3
-5.5 <= V4 <= +inf
-0 <= V5 <= 1
-0 <= V6 <= 1
-0 <= V7 <= 1
-0 <= V8 <= 1
-General
-V4
-Binary
-V8
-End
-"""
-
-const LPFILE2 = """Minimize
-obj: -1 V4 + 1 V5
-Subject To
-CON1: 1 V1 >= 0.0
-CON2: 1 V2 >= 2.0
-CON3: 1 V3 <= 2.5
-CON4: 1 V5 + 1 V6 + 1 V7 <= 1.0
-Bounds
--inf <= V1 <= 3
--inf <= V2 <= 3
--inf <= V3 <= 3
-5.5 <= V4 <= +inf
-0 <= V5 <= 1
-0 <= V6 <= 1
-0 <= V7 <= 1
-0 <= V8 <= 1
-General
-V4
-Binary
-V8
-End
-"""
-
 @testset "correctname" begin
     # not very complete. Need better way to test
     @test LPWriter.correctname(repeat("x", 256)) == repeat("x", 255)
@@ -199,7 +153,8 @@ end
         ["V$i" for i in 1:8],
         ["CON$i" for i in 1:4]
         )
-        @test String(take!(io)) == LPFILE
+        MODEL1 = replace(readstring(joinpath(@__DIR__, "model1.lp")), "\r\n", "\n")
+        @test String(take!(io)) == MODEL1
         close(io)
     end
 
@@ -225,7 +180,8 @@ end
         ["V[$(i)]" for i in 1:8],
         ["$(i)CON$i" for i in 1:4]
         )
-        @test String(take!(io)) == LPFILE2
+        MODEL2 = replace(readstring(joinpath(@__DIR__, "model2.lp")), "\r\n", "\n")
+        @test String(take!(io)) == MODEL2
         close(io)
     end
 
