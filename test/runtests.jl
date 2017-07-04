@@ -222,8 +222,8 @@ end
         LPWriter.SOS[],
         Array{Float64}(0,0),
         "TestModel",
-        ["V$i" for i in 1:8],
-        ["CON$i" for i in 1:4]
+        ["V[$(i)]" for i in 1:8],
+        ["$(i)CON$i" for i in 1:4]
         )
         @test String(take!(io)) == LPFILE2
         close(io)
