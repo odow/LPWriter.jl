@@ -5,7 +5,6 @@ os:
   - osx
 julia:
   - 0.6
-  - nightly
 notifications:
   email: false
 # uncomment the following lines to override the default test script
@@ -13,7 +12,5 @@ notifications:
 #  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
 #  - julia -e 'Pkg.clone(pwd()); Pkg.build("LPWriter"); Pkg.test("LPWriter"; coverage=true)'
 after_success:
-  # push coverage results to Coveralls
-  - julia -e 'cd(Pkg.dir("LPWriter")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
   # push coverage results to Codecov
   - julia -e 'cd(Pkg.dir("LPWriter")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
