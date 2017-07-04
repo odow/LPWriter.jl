@@ -8,6 +8,21 @@ immutable SOS
     weights::Vector
 end
 
+function verifyname(name::String)
+    if length(name) > 255
+        return false
+    end
+    m = match(r"^([\.0-9])", name)
+    if !isa(m, Void)
+        return false
+    end
+    m = match(r"([^a-zA-Z0-9\!\"\#\$\%\&\(\)\/\,\.\;\?\@\_\`\'\{\}\|\~])", name)
+    if !isa(m, Void)
+        return false
+    end
+    return true
+end
+
 function writelp(io::IO,
     A::AbstractMatrix,       # the constraint matrix
     collb::Vector,  # vector of variable lower bounds
@@ -23,6 +38,20 @@ function writelp(io::IO,
     colnames::Vector{String} = ["V$i" for i in 1:length(c)],
     rownames::Vector{String} = ["C$i" for i in 1:length(rowub)]
 )
+    for cname in colnames
+        if !verifyname(cname)
+            error("Invalid variable name $(cname)")
+        end
+    end
+    for rname in rownames
+        if !verifyname(rname)
+            error("Invalid constraint name $(rname)")
+        end
+    end
+
+    if !any(verifyname.(rownames))
+        error("Invalid row name")
+    end
 
     if length(Q) != 0
         error("LP writer does not support Quadratic objective")

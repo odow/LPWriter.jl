@@ -24,11 +24,45 @@ V8
 End
 """
 
+const LPFILE2 = """Minimize
+obj: -1 V4 + 1 V5
+Subject To
+CON1: 1 V1 >= 0.0
+CON2: 1 V2 >= 2.0
+CON3: 1 V3 <= 2.5
+CON4: 1 V5 + 1 V6 + 1 V7 <= 1.0
+Bounds
+-inf <= V1 <= 3
+-inf <= V2 <= 3
+-inf <= V3 <= 3
+5.5 <= V4 <= +inf
+0 <= V5 <= 1
+0 <= V6 <= 1
+0 <= V7 <= 1
+0 <= V8 <= 1
+General
+V4
+Binary
+V8
+End
+"""
+
+@testset "verifyname" begin
+    # not very complete. Need better way to test
+    @test LPWriter.verifyname("x")
+    @test LPWriter.verifyname(repeat("x", 255))
+    @test LPWriter.verifyname(repeat("x", 256)) == false
+    @test LPWriter.verifyname(".x") == false
+    @test LPWriter.verifyname("0x") == false
+    @test LPWriter.verifyname("x^") == false
+    @test LPWriter.verifyname("x*ds") == false
+end
+
 @testset "print_objective!" begin
     io = IOBuffer()
 
-    LPWriter.print_objective!(io, [0, 1, -2.3, 4e3], ["A", "B", "C", "x[1]"])
-    @test String(take!(io)) == "obj: 1 B - 2.3 C + 4e3 x[1]\n"
+    LPWriter.print_objective!(io, [0, 1, -2.3, 4e3], ["A", "B", "C", "x"])
+    @test String(take!(io)) == "obj: 1 B - 2.3 C + 4e3 x\n"
 
     close(io)
 end
@@ -133,7 +167,7 @@ end
         close(io)
     end
 
-    @testset "writemps" begin
+    @testset "writelp" begin
         io = IOBuffer()
         LPWriter.writelp(io,
         [
@@ -156,6 +190,32 @@ end
         ["CON$i" for i in 1:4]
         )
         @test String(take!(io)) == LPFILE
+        close(io)
+    end
+
+    @testset "writelp2" begin
+        io = IOBuffer()
+        LPWriter.writelp(io,
+        [
+        1 0 0 0 0 0 0 0;
+        0 1 0 0 0 0 0 0;
+        0 0 1 0 0 0 0 0;
+        0 0 0 0 1 1 1 0
+        ],
+        [-Inf, -Inf, -Inf, 5.5, 0, 0, 0, 0],
+        [3, 3, 3, Inf, 1, 1, 1, 1],
+        [0,0,0,-1,1,0,0,0],
+        [0, 2, -Inf, -Inf],
+        [Inf, Inf, 2.5, 1],
+        :Min,
+        [:Cont, :Cont, :Cont, :Int, :Cont, :Cont, :Cont, :Bin],
+        LPWriter.SOS[],
+        Array{Float64}(0,0),
+        "TestModel",
+        ["V$i" for i in 1:8],
+        ["CON$i" for i in 1:4]
+        )
+        @test String(take!(io)) == LPFILE2
         close(io)
     end
 
