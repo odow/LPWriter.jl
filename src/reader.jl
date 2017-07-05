@@ -155,7 +155,7 @@ const constraintsense = Dict(
     ">=" => :ge,
 )
 
-function parseconstraintcoefficients!(data, tokens, rowidx)
+function parseconstraintcoefficients!(data, line, tokens, rowidx)
     # tokens should be in order (+/-) (numeric) (variable) ...
     while length(tokens) > 0
         variable = String(pop!(tokens))
@@ -213,7 +213,7 @@ function parsesection!(::Type{Val{:constraints}}, data, line)
         end
         data[:open_constraint] = false # finished
     end
-    parseconstraintcoefficients!(data, tokens, length(data[:rownames]))
+    parseconstraintcoefficients!(data, line, tokens, length(data[:rownames]))
 end
 
 

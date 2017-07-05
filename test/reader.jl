@@ -33,6 +33,7 @@
 
     for line in [
             "x not free",
+            "x notfree",
             "1.1 > x",
             "> x 1.1",
             "x free < 1",
@@ -82,10 +83,15 @@ end
     @test data[:c] == [1.0, 1.0]
 
     data = LPWriter.newdatastore()
+    LPWriter.parsesection!(Val{:obj}, data, "+ 1 x - 2.3 y")
+    @test data[:c] == [-2.3, 1.0]
+
+    data = LPWriter.newdatastore()
     LPWriter.parsesection!(Val{:obj}, data, "")
     @test data[:c] == Float64[]
 
     @test_throws Exception LPWriter.parsesection!(Val{:obj}, data, "-1 x + x y")
+    @test_throws Exception LPWriter.parsesection!(Val{:obj}, data, "-1 x * 1 y")
 end
 @testset "Constraints" begin
     data = LPWriter.newdatastore()
@@ -95,6 +101,24 @@ end
     @test data[:A].v == [-2.4, 1.2]
     @test data[:rowlb][1] == -Inf
     @test data[:rowub][1] == 1.0
+
+    @test_throws Exception LPWriter.parsesection!(Val{:constraints}, data, "C1: a x - 2.4 y <= 1")
+    @test_throws Exception LPWriter.parsesection!(Val{:constraints}, data, "C1: 1 x * 2.4 y <= 1")
+
+    data = LPWriter.newdatastore()
+    LPWriter.parsesection!(Val{:constraints}, data, "C1: 1 x + 2.4 y")
+    @test_throws Exception LPWriter.parsesection!(Val{:constraints}, data, "C1: 1 x + 2.4 y <= 1")
+
+    @test_throws Exception LPWriter.parsesection!(Val{:constraints}, data, "C1: ")
+
+    data = LPWriter.newdatastore()
+    LPWriter.parsesection!(Val{:constraints}, data, "C1: -1.2 x - 2.4 y = 1")
+    @test data[:A].i == [1, 1]
+    @test data[:A].j == [1, 2]
+    @test data[:A].v == [-2.4, -1.2]
+    @test data[:rowlb][1] == 1.0
+    @test data[:rowub][1] == 1.0
+
 end
 
 @testset "Model 1" begin
