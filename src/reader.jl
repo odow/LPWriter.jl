@@ -110,7 +110,8 @@ function readlp(filename::String)
         data[:colnames],
         data[:rownames]
 end
-parsesection!(::Type{Val{:quit}}, data, line) = nothing
+
+parsesection!(::Type{Val{:quit}}, data, line) = error("Corrupted LP File. You have the lne $(line) after an end.")
 
 function parsesection!(::Type{Val{:obj}}, data, line)
     # okay so line should be the start of the objective

@@ -1,3 +1,8 @@
+@testset "Bad Variable" begin
+    data = LPWriter.newdatastore()
+    @test_throws Exception LPWriter.getvariableindex!(data, "x y")
+end
+
 @testset "Bounds" begin
     @testset "Infinity" begin
         @test LPWriter.parsefloat("-inf") == -Inf
@@ -90,7 +95,10 @@ end
     LPWriter.parsesection!(Val{:obj}, data, "")
     @test data[:c] == Float64[]
 
+    data = LPWriter.newdatastore()
     @test_throws Exception LPWriter.parsesection!(Val{:obj}, data, "-1 x + x y")
+
+    data = LPWriter.newdatastore()
     @test_throws Exception LPWriter.parsesection!(Val{:obj}, data, "-1 x * 1 y")
 end
 @testset "Constraints" begin
@@ -102,14 +110,25 @@ end
     @test data[:rowlb][1] == -Inf
     @test data[:rowub][1] == 1.0
 
+    data = LPWriter.newdatastore()
     @test_throws Exception LPWriter.parsesection!(Val{:constraints}, data, "C1: a x - 2.4 y <= 1")
+
+    data = LPWriter.newdatastore()
     @test_throws Exception LPWriter.parsesection!(Val{:constraints}, data, "C1: 1 x * 2.4 y <= 1")
 
     data = LPWriter.newdatastore()
     LPWriter.parsesection!(Val{:constraints}, data, "C1: 1 x + 2.4 y")
     @test_throws Exception LPWriter.parsesection!(Val{:constraints}, data, "C1: 1 x + 2.4 y <= 1")
 
-    @test_throws Exception LPWriter.parsesection!(Val{:constraints}, data, "C1: ")
+    data = LPWriter.newdatastore()
+    LPWriter.parsesection!(Val{:constraints}, data, "C1: ")
+    LPWriter.parsesection!(Val{:constraints}, data, "1 x + 2.4 y")
+    LPWriter.parsesection!(Val{:constraints}, data, "== 1")
+    @test data[:A].i == [1, 1]
+    @test data[:A].j == [1, 2]
+    @test data[:A].v == [2.4, 1.0]
+    @test data[:rowlb][1] == 1.0
+    @test data[:rowub][1] == 1.0
 
     data = LPWriter.newdatastore()
     LPWriter.parsesection!(Val{:constraints}, data, "C1: -1.2 x - 2.4 y = 1")
@@ -181,4 +200,8 @@ end
     cnames[1] = "Var4"
     @test colnames == cnames
     @test rownames == ["CON1", "R2", "CON3", "CON4"]
+end
+
+@testset "Corrrupt" begin
+    @test_throws Exception LPWriter.readlp("corrupt.lp")
 end
