@@ -9,7 +9,7 @@ function writelp(io::IO,
     colcat::Vector{Symbol},  # constraint types
     sos::Vector{SOS},        # SOS information
     Q::AbstractMatrix,      #  Quadratic objectives 0.5 * x' Q x
-    modelname::AbstractString="MPSWriter_jl",  # MPS model name
+    modelname::AbstractString="LPWriter_jl",  # MPS model name
     colnames::Vector{String} = ["V$i" for i in 1:length(c)],
     rownames::Vector{String} = ["C$i" for i in 1:length(rowub)]
 )
@@ -23,8 +23,8 @@ function writelp(io::IO,
             rownames[i] = correctname(rname)
         end
     end
-    if length(Q) != 0
-        error("LP writer does not support Quadratic objective")
+    if length(Q) != 0 && !(size(Q, 1) == size(Q, 2) == length(c))
+        error("Quadratic objective not square matrix of right size.")
     end
     if sense != :Max && sense != :Min
         error("sense must be either :Min or :Max. Currently sense =$(sense).")
@@ -39,7 +39,7 @@ function writelp(io::IO,
         println(io,"Minimize")
     end
 
-    print_objective!(io, c, colnames)
+    print_objective!(io, c, Q, colnames)
     print_constraints!(io, A, rowlb, rowub, colnames, rownames)
     print_bounds!(io, collb, colub, colnames)
     print_category!(io, colcat, colnames)
@@ -47,15 +47,44 @@ function writelp(io::IO,
     println(io, "End")
 end
 
-function print_objective!(io, c, colnames)
+function print_objective!(io, c, Q, colnames)
     print(io, "obj: ")
+    print_linear_objective!(io, c, colnames)
+    if length(Q) > 0
+        print_quadratic_expression!(io, Q, colnames)
+    end
+    println(io, "")
+end
+function print_linear_objective!(io, c, colnames)
     sp_c = sparse(c)
     is_first = true
     for (col, val) in zip(sp_c.nzind, sp_c.nzval)
         print_variable_coefficient!(io, val, colnames[col], is_first)
         is_first = false
     end
-    println(io, "")
+end
+function print_quadratic_expression!(io, Q, colnames)
+    # we assume that Q = Q'
+    sQ = sparse(Q)
+    print(io, " + [ ")
+    rows = rowvals(sQ)
+    vals = nonzeros(sQ)
+    is_first = true
+    for col in 1:size(sQ, 2)
+        for j in nzrange(sQ, col)
+            row = rows[j]
+            row > col && continue # because we assume Q = Q'
+            if row == col
+                print_variable_coefficient!(io, vals[j], colnames[row], is_first)
+                print(io, "^2")
+            else
+                print_variable_coefficient!(io, 2 * vals[j], colnames[row], is_first)
+                print(io, " * $(colnames[col])")
+            end
+            is_first = false
+        end
+    end
+    print(io, " ]/2")
 end
 
 function print_variable_coefficient!(io, val, name, is_first)

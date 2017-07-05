@@ -1,5 +1,5 @@
 Minimize
-obj: -1 V4 + 1 V5
+obj: -1 V4 + 1 V5 + [ 1 V3^2 - 2 V3 * V4 + 1 V4^2 ]/2
 Subject To
 CON1: 1 V1 >= 0.0
 CON2: 1 V2 >= 2.0

@@ -23,14 +23,38 @@ end
     @test LPWriter.verifyname("x*ds") == false
 end
 
-@testset "print_objective!" begin
+@testset "print_quadratic_expression!" begin
     io = IOBuffer()
 
-    LPWriter.print_objective!(io, [0, 1, -2.3, 4e3], ["A", "B", "C", "x"])
-    @test String(take!(io)) == "obj: 1 B - 2.3 C + 4e3 x\n"
+    LPWriter.print_quadratic_expression!(io, [1 0.5; 0.5 0], ["x", "y"])
+    @test String(take!(io)) == " + [ 1 x^2 + 1 x * y ]/2"
 
+    LPWriter.print_quadratic_expression!(io, [-1 -0.5; -0.5 0], ["x", "y"])
+    @test String(take!(io)) == " + [ -1 x^2 - 1 x * y ]/2"
     close(io)
 end
+
+@testset "print_objective!" begin
+    @testset "print_linear_objective!" begin
+        io = IOBuffer()
+
+        LPWriter.print_linear_objective!(io, [0, 1, -2.3, 4e3], ["A", "B", "C", "x"])
+        @test String(take!(io)) == "1 B - 2.3 C + 4e3 x"
+
+        close(io)
+    end
+
+    @testset "print_objective!" begin
+        io = IOBuffer()
+
+        LPWriter.print_objective!(io, [0, 1, -2.3, 4e3], sparse([1,3],[1,3],[1,2],4,4),["A", "B", "C", "x"])
+        @test String(take!(io)) == "obj: 1 B - 2.3 C + 4e3 x + [ 1 A^2 + 2 C^2 ]/2\n"
+
+        close(io)
+    end
+end
+
+
 
 @testset "print_variable_coefficient!" begin
     io = IOBuffer()
@@ -176,7 +200,7 @@ end
         :Min,
         [:Cont, :Cont, :Cont, :Int, :Cont, :Cont, :Cont, :Bin],
         LPWriter.SOS[],
-        Array{Float64}(0,0),
+        sparse([3, 3, 4, 4], [3, 4, 3, 4], [1, -1, -1, 1], 8, 8),
         "TestModel",
         ["V[$(i)]" for i in 1:8],
         ["$(i)CON$i" for i in 1:4]

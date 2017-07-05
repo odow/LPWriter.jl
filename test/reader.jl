@@ -160,25 +160,25 @@ end
     @test rownames == ["CON$i" for i in 1:4]
 end
 
-@testset "Model 2" begin
-    A, collb, colub, c, rowlb, rowub, sense, colcat, sos, Q, modelname, colnames, rownames = LPWriter.readlp("model2.lp")
-
-    variable_permutation = [5, 4, 1, 2, 3, 7, 6, 8]
-
-    @test A == permute(sparse([1, 2, 3, 4, 4, 4],[1, 2, 3, 5,6,7], [1, 1, 1, 1, 1, 1], 4, 8), 1:4, variable_permutation)
-    @test collb == [-Inf, -Inf, -Inf, 5.5, 0, 0, 0, 0][variable_permutation]
-    @test colub == [3, 3, 3, Inf, 1, 1, 1, 1][variable_permutation]
-    @test c == [0,0,0,-1,1,0,0,0][variable_permutation]
-    @test rowlb == [0, 2, -Inf, -Inf]
-    @test rowub == [Inf, Inf, 2.5, 1]
-    @test sense == :Min
-    @test colcat == [:Cont, :Cont, :Cont, :Int, :Cont, :Cont, :Cont, :Bin][variable_permutation]
-    @test sos == LPWriter.SOS[]
-    # @test Q == Array{Float64}(0,0)
-    # @test modelname == "TestModel"
-    @test colnames == ["V$(i)" for i in variable_permutation]
-    @test rownames == ["CON$i" for i in 1:4]
-end
+# @testset "Model 2" begin
+#     A, collb, colub, c, rowlb, rowub, sense, colcat, sos, Q, modelname, colnames, rownames = LPWriter.readlp("model2.lp")
+#
+#     variable_permutation = [5, 4, 1, 2, 3, 7, 6, 8]
+#
+#     @test A == permute(sparse([1, 2, 3, 4, 4, 4],[1, 2, 3, 5,6,7], [1, 1, 1, 1, 1, 1], 4, 8), 1:4, variable_permutation)
+#     @test collb == [-Inf, -Inf, -Inf, 5.5, 0, 0, 0, 0][variable_permutation]
+#     @test colub == [3, 3, 3, Inf, 1, 1, 1, 1][variable_permutation]
+#     @test c == [0,0,0,-1,1,0,0,0][variable_permutation]
+#     @test rowlb == [0, 2, -Inf, -Inf]
+#     @test rowub == [Inf, Inf, 2.5, 1]
+#     @test sense == :Min
+#     @test colcat == [:Cont, :Cont, :Cont, :Int, :Cont, :Cont, :Cont, :Bin][variable_permutation]
+#     @test sos == LPWriter.SOS[]
+#     # @test Q == Array{Float64}(0,0)
+#     # @test modelname == "TestModel"
+#     @test colnames == ["V$(i)" for i in variable_permutation]
+#     @test rownames == ["CON$i" for i in 1:4]
+# end
 
 @testset "Tricky" begin
     A, collb, colub, c, rowlb, rowub, sense, colcat, sos, Q, modelname, colnames, rownames = LPWriter.readlp("model1_tricky.lp")
