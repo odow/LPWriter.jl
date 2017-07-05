@@ -74,6 +74,7 @@ end
     end
 end
 
+
 @testset "Objective" begin
     data = LPWriter.newdatastore()
     LPWriter.parsesection!(Val{:obj}, data, "obj: -1 x + 1 y")
@@ -100,6 +101,30 @@ end
 
     data = LPWriter.newdatastore()
     @test_throws Exception LPWriter.parsesection!(Val{:obj}, data, "-1 x * 1 y")
+
+    @testset "quad" begin
+        data = LPWriter.newdatastore()
+        tokens = LPWriter.tokenize("+ [ 1 x^2 - 2 x * y ") #"]/2")
+        LPWriter.parse_quadratic_expression!(data, tokens)
+        @test data[:Q].i == [2, 1, 2, 2]
+        @test data[:Q].j == [1, 2, 2, 2]
+        @test data[:Q].v == [-1.0, -1.0, 0.5, 0.5]
+
+        data = LPWriter.newdatastore()
+        LPWriter.parsesection!(Val{:obj}, data, "obj: -1 x + 1 y + [ 1 x^2 - 0.5 x * y ]/2")
+        @test data[:c] == [1.0, -1.0]
+        @test data[:Q].i == [2, 1, 2, 2]
+        @test data[:Q].j == [1, 2, 2, 2]
+        @test data[:Q].v == [-0.25, -0.25, 0.5, 0.5]
+
+        data = LPWriter.newdatastore()
+        LPWriter.parsesection!(Val{:obj}, data, "obj: [ 1 x^2 - 0.5 x * y ]/2 - 1 x + 1 y")
+        @test data[:c] == [1.0, -1.0]
+        @test data[:Q].i == [2, 1, 2, 2]
+        @test data[:Q].j == [1, 2, 2, 2]
+        @test data[:Q].v == [-0.25, -0.25, 0.5, 0.5]
+    end
+
 end
 @testset "Constraints" begin
     data = LPWriter.newdatastore()

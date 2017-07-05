@@ -127,6 +127,10 @@ function parsesection!(::Type{Val{:obj}}, data, line)
     # tokens should be in order (+/-) (numeric) (variable) ...
     while length(tokens) > 0
         variable = String(pop!(tokens))
+        if variable == "]/2"
+            parse_quadratic_expression!(data, tokens)
+            continue
+        end
         idx = getvariableindex!(data, variable) # catch in here for malformed variables
         coef_token = pop!(tokens)
         try
@@ -155,6 +159,49 @@ const constraintsense = Dict(
     ">"  => :ge,
     ">=" => :ge,
 )
+
+function parse_quadratic_expression!(data, tokens)
+    # assumed to have just poped a "]/2" token
+    last_token = "]/2"
+    while last_token != "["
+        # should be variable
+        tok = pop!(tokens)
+        if contains(tok, "^2")
+            i = getvariableindex!(data, String(tok[1:(end-2)]))
+            j = i
+        else
+            j = getvariableindex!(data, tok)
+            mult = pop!(tokens)
+            mult != "*" && error("Expected multiplication between variables")
+            i = getvariableindex!(data,  pop!(tokens))
+        end
+        coef = parsefloat(pop!(tokens))
+        _sign = pop!(tokens)
+        if _sign == "+"
+        elseif _sign == "-"
+            coef *= -1
+        elseif _sign == "["
+            last_token = "["
+        else
+            error("Unknown sign $_sign infront of quadratic expression")
+        end
+        push!(data[:Q].i, i)
+        push!(data[:Q].j, j)
+        push!(data[:Q].v, coef/2)
+        push!(data[:Q].i, j)
+        push!(data[:Q].j, i)
+        push!(data[:Q].v, coef/2)
+    end
+    if length(tokens) > 0 # otherwise we're at the beginning
+        _sign = pop!(tokens)
+        if _sign == "+"
+        elseif _sign == "-"
+            data[:Q].v *= -1
+        else
+            error("Unknown sign $_sign infront of quadratic expression")
+        end
+    end
+end
 
 function parseconstraintcoefficients!(data, line, tokens, rowidx)
     # tokens should be in order (+/-) (numeric) (variable) ...
