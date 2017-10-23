@@ -5,8 +5,16 @@ module LPWriter
 immutable SOS
     order::Int
     indices::Vector{Int}
-    weights::Vector
+    weights::Vector{Float64}
+    function SOS(order, indices, weights)
+        if order != 1 && order != 2
+            error("Only SOS of type I and II are supported.")
+        end
+        new(order, indices, weights)
+    end
 end
+Base.hash(x::SOS) = hash(x.order, hash(x.indices, hash(x.weights)))
+Base.:(==)(x::SOS, y::SOS) = hash(x) == hash(y)
 
 const START_REG = r"^([\.0-9eE])"
 const NAME_REG = r"([^a-zA-Z0-9\!\"\#\$\%\&\(\)\/\,\.\;\?\@\_\`\'\{\}\|\~])"

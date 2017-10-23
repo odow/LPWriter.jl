@@ -181,7 +181,48 @@ function parseconstraintcoefficients!(data, line, tokens, rowidx)
         push!(data[:A].v, coefficient)
     end
 end
+
+function parsesos!(data, line)
+    tokens = tokenize(line)
+    if length(tokens) < 3
+        error(string("Malformed SOS constraint: ", line))
+    end
+    if tokens[2] == "S1::"
+        order = 1
+    elseif tokens[2] == "S2::"
+        order = 2
+    else
+        error("SOS of type $(tokens[2]) not recognised")
+    end
+    names   = String[]
+    weights = Float64[]
+    for token in tokens[3:end]
+        items = split(token, ":")
+        if length(items) != 2
+            error(string("Invalid sequence: ", token))
+        end
+        push!(names, String(items[1]))
+        push!(weights, parsefloat(String(items[2])))
+    end
+    indices = Int[]
+    for name in names
+        idx = findfirst(data[:colnames], name)
+        if idx == 0
+            push!(data[:colnames], name)
+            push!(indices, length(data[:colnames]))
+        else
+            push!(indices, idx)
+        end
+    end
+    push!(data[:sos], SOS(order, indices, weights))
+end
+
 function parsesection!(::Type{Val{:constraints}}, data, line)
+    if match(r" S([0-9]):: ", line) != nothing
+        # it's an SOS constraint
+        parsesos!(data, line)
+        return
+    end
     if data[:open_constraint] == false
         push!(data[:rownames], "R$(length(data[:rownames]) + 1)")
         push!(data[:rowlb], -Inf)
