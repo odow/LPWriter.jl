@@ -32,6 +32,5 @@ writelp(io::IO,
 Limitations:
  - `sense` must be `:Min` or `:Max`
  - Quadratic objectives are unsupported
- - SOS constraints are unsupported
  - Only Integer (colcat = `:Int`), Binary (colcat = `:Bin`) and Continuous (colcat = `:Cont`)
     variables are supported.

@@ -29,9 +29,9 @@ function writelp(io::IO,
     if sense != :Max && sense != :Min
         error("sense must be either :Min or :Max. Currently sense =$(sense).")
     end
-    if length(sos) > 0
-        error("LP writer does not currently support SOS constraints")
-    end
+    # if length(sos) > 0
+    #     error("LP writer does not currently support SOS constraints")
+    # end
 
     if sense == :Max
         println(io,"Maximize")
@@ -41,6 +41,7 @@ function writelp(io::IO,
 
     print_objective!(io, c, colnames)
     print_constraints!(io, A, rowlb, rowub, colnames, rownames)
+    print_sos!(io, sos, colnames)
     print_bounds!(io, collb, colub, colnames)
     print_category!(io, colcat, colnames)
 
@@ -153,4 +154,21 @@ function print_category!(io, colcat, colnames)
             println(io, "$(name)")
         end
     end
+end
+
+function print_sos!(io, sosconstraints::Vector{SOS}, colnames)
+    for (i, sos) in enumerate(sosconstraints)
+        print_sos!(io, string("csos", i), sos, colnames)
+    end
+end
+function print_sos!(io, rowname::String, sos::SOS, colnames)
+    # format
+    # c5: S1:: col_1:1 y:2 z:3
+    print(io, rowname, ": ")
+    print(io, "S", string(sos.order), "::")
+    for (index, weight) in zip(sos.indices, sos.weights)
+        print(io, " ", colnames[index], ":")
+        print_shortest(io, weight)
+    end
+    println(io)
 end

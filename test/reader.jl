@@ -140,6 +140,17 @@ end
 
 end
 
+@testset "SOS" begin
+    data = LPWriter.newdatastore()
+    LPWriter.parsesos!(data, "c5: S1:: x:1 y:2")
+    @test length(data[:sos]) == 1
+    @test data[:sos][1] == LPWriter.SOS(1, [1,2], [1.0,2.0])
+
+    @test_throws Exception LPWriter.parsesos!(data, "c5: S1::")
+    @test_throws Exception LPWriter.parsesos!(data, "c5: S3:: x:1 y:2")
+    @test_throws Exception LPWriter.parsesos!(data, "c5: S2:: x:y:1 y:2")
+end
+
 @testset "Model 1" begin
     A, collb, colub, c, rowlb, rowub, sense, colcat, sos, Q, modelname, colnames, rownames = LPWriter.readlp("model1.lp")
 
@@ -153,7 +164,10 @@ end
     @test rowub == [Inf, Inf, 2.5, 1]
     @test sense == :Max
     @test colcat == [:Cont, :Cont, :Cont, :Int, :Cont, :Cont, :Cont, :Bin][variable_permutation]
-    @test sos == LPWriter.SOS[]
+    @test sos == LPWriter.SOS[
+        LPWriter.SOS(1, [3,5,1], [1.0, 2.0, 3.0]),
+        LPWriter.SOS(2, [4,2,1], [2.0, 1.0, 2.5])
+    ]
     # @test Q == Array{Float64}(0,0)
     # @test modelname == "TestModel"
     @test colnames == ["V$(i)" for i in variable_permutation]
