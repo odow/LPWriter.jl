@@ -23,15 +23,10 @@ function writelp(io::IO,
             rownames[i] = correctname(rname)
         end
     end
-    if length(Q) != 0
-        error("LP writer does not support Quadratic objective")
-    end
+
     if sense != :Max && sense != :Min
         error("sense must be either :Min or :Max. Currently sense =$(sense).")
     end
-    # if length(sos) > 0
-    #     error("LP writer does not currently support SOS constraints")
-    # end
 
     if sense == :Max
         println(io,"Maximize")
@@ -39,7 +34,7 @@ function writelp(io::IO,
         println(io,"Minimize")
     end
 
-    print_objective!(io, c, colnames)
+    print_objective!(io, c, colnames, Q)
     print_constraints!(io, A, rowlb, rowub, colnames, rownames)
     print_sos!(io, sos, colnames)
     print_bounds!(io, collb, colub, colnames)
@@ -48,7 +43,7 @@ function writelp(io::IO,
     println(io, "End")
 end
 
-function print_objective!(io, c, colnames)
+function print_objective!(io, c, colnames, Q)
     print(io, "obj: ")
     sp_c = sparse(c)
     is_first = true
@@ -56,17 +51,21 @@ function print_objective!(io, c, colnames)
         print_variable_coefficient!(io, val, colnames[col], is_first)
         is_first = false
     end
+    if length(Q) > 0
+        print(io, " + ")
+        print_qp!(io, colnames, Q)
+    end
     println(io, "")
 end
 
-function print_variable_coefficient!(io, val, name, is_first)
+function print_variable_coefficient!{T}(io, val::T, name, is_first)
     if is_first
         print_shortest(io, val)
     else
-        print(io, val < 0?" - ":" + ")
+        print(io, val < zero(T)?" - ":" + ")
         print_shortest(io, abs(val))
     end
-    print(io, " $(name)")
+    print(io, " ", name)
 end
 
 function getrowsense{T1 <: Real, T2<: Real}(rowlb::Vector{T1}, rowub::Vector{T2})
@@ -103,15 +102,15 @@ function print_constraints!(io, A, rowlb, rowub, colnames, rownames)
     cols, vals = rowvals(sA), nonzeros(sA)
     for row in 1:length(rowlb)
         is_first = true
-        print(io, "$(rownames[row]): ")
+        print(io, rownames[row], ": ")
         for j in nzrange(sA, row)
             print_variable_coefficient!(io, vals[j], colnames[cols[j]], is_first)
             is_first = false
         end
         if row_sense[row] == :(>=)
-            println(io, " $(row_sense[row]) $(rowlb[row])")
+            println(io, " ", row_sense[row], " ", rowlb[row])
         else
-            println(io, " $(row_sense[row]) $(rowub[row])")
+            println(io, " ", row_sense[row], " ", rowub[row])
         end
     end
 end
@@ -120,14 +119,14 @@ function print_bounds!(io, collb, colub, colnames)
     println(io, "Bounds")
     for (i, (lb, ub, name)) in enumerate(zip(collb, colub, colnames))
         if lb == -Inf && ub == +Inf
-            println(io, "$(name) free")
+            println(io, name, " free")
         else
             if lb == -Inf
                 print(io, "-inf")
             else
                 print_shortest(io, lb)
             end
-             print(io, " <= $(name) <= ")
+             print(io, " <= ", name, " <= ")
             if ub == Inf
                 print(io, "+inf")
             else
@@ -145,13 +144,13 @@ function print_category!(io, colcat, colnames)
     println(io, "General")# Integer
     for (cat, name) in zip(colcat, colnames)
         if cat == :Int
-            println(io, "$(name)")
+            println(io, name)
         end
     end
     println(io, "Binary")
     for (cat, name) in zip(colcat, colnames)
         if cat == :Bin
-            println(io, "$(name)")
+            println(io, name)
         end
     end
 end
@@ -171,4 +170,27 @@ function print_sos!(io, rowname::String, sos::SOS, colnames)
         print_shortest(io, weight)
     end
     println(io)
+end
+
+function print_qp!{T}(io, colnames, Q::AbstractMatrix{T})
+    print(io, "[ ")
+    Qs = collect(Q)
+    isfirst = true
+    for i in 1:size(Q, 2)
+        for j in i:size(Q, 1)
+            if !iszero(Q[i,j])
+                val = Q[i,j] + Q[j, i]
+                if i == j
+                    print_variable_coefficient!(io, Q[i,j], colnames[i], isfirst)
+                    print(io, "^2")
+                else
+                    print_variable_coefficient!(io, Q[i,j] + Q[j, i], colnames[i], isfirst)
+                    print(io, " * ", colnames[j])
+                end
+                isfirst = false
+            end
+
+        end
+    end
+    print(io, " ]/2")
 end

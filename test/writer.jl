@@ -26,7 +26,7 @@ end
 @testset "print_objective!" begin
     io = IOBuffer()
 
-    LPWriter.print_objective!(io, [0, 1, -2.3, 4e3], ["A", "B", "C", "x"])
+    LPWriter.print_objective!(io, [0, 1, -2.3, 4e3], ["A", "B", "C", "x"], [])
     @test String(take!(io)) == "obj: 1 B - 2.3 C + 4e3 x\n"
 
     close(io)
@@ -116,15 +116,25 @@ end
     close(io)
 end
 
+@testset "print_qp!" begin
+    io = IOBuffer()
+    LPWriter.print_qp!(io, ["x1", "x2"], sparse([1, 1, 2], [1, 2, 1], [1.0, 1.05, 1.05]))
+    @test String(take!(io)) == "[ 1 x1^2 + 2.1 x1 * x2 ]/2"
+
+    LPWriter.print_qp!(io, ["x1", "x2"], sparse([1, 1, 2], [1, 2, 1], [-1.0, -1.05, -1.05]))
+    @test String(take!(io)) == "[ -1 x1^2 - 2.1 x1 * x2 ]/2"
+    close(io)
+end
+
 @testset "writelp" begin
 
-    @testset "Quadratic Objectives" begin
-        io = IOBuffer()
-        @test_throws Exception LPWriter.writelp(io,
-            Array{Float64}(0,0), [], [], [], [], [], :Max, Symbol[],
-            LPWriter.SOS[], [1 0; 0 1])
-        close(io)
-    end
+    # @testset "Quadratic Objectives" begin
+    #     io = IOBuffer()
+    #     @test_throws Exception LPWriter.writelp(io,
+    #         Array{Float64}(0,0), [], [], [], [], [], :Max, Symbol[],
+    #         LPWriter.SOS[], [1 0; 0 1])
+    #     close(io)
+    # end
 
     @testset "Bad sense" begin
         io = IOBuffer()
@@ -199,4 +209,25 @@ end
         close(io)
     end
 
+    @testset "writeqp" begin
+        io = IOBuffer()
+        LPWriter.writelp(io,
+        Array{Float64}(0, 2),
+        [-Inf, -Inf],
+        [Inf, Inf],
+        [1.0, 2.0],
+        Float64[],
+        Float64[],
+        :Min,
+        [:Cont, :Cont],
+        LPWriter.SOS[],
+        [1 0.75; 0.75 1],
+        "TestModel",
+        ["V[$(i)]" for i in 1:2],
+        String[]
+        )
+        MODELQP = replace(readstring(joinpath(@__DIR__, "qp.lp")), "\r\n", "\n")
+        @test String(take!(io)) == MODELQP
+        close(io)
+    end
 end

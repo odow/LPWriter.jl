@@ -23,6 +23,7 @@ const KEYWORDS = Dict(
     "minimum"  => Val{:obj},
 
     "subject to" => Val{:constraints},
+    "subj to" => Val{:constraints},
     "such that"  => Val{:constraints},
     "st"         => Val{:constraints},
     "s.t."       => Val{:constraints},
@@ -39,6 +40,15 @@ const KEYWORDS = Dict(
     "binaries" => Val{:binary},
 
     "end"      => Val{:quit}
+)
+
+const constraintsense = Dict(
+    "<"  => :le,
+    "<=" => :le,
+    "="  => :eq,
+    "==" => :eq,
+    ">"  => :ge,
+    ">=" => :ge,
 )
 
 const COMMENT_REG = r"(.*?)\\(.*)"
@@ -120,6 +130,8 @@ function parsesection!(::Type{Val{:obj}}, data, line)
         m = match(r"(.*?)\:(.*)", line)
         line = String(m[2])
     end
+    # quadratic = match(r"\[(.*?)\]/2", line)
+
     tokens = tokenize(line)
     if length(tokens) == 0 # no objective
         return
@@ -128,54 +140,39 @@ function parsesection!(::Type{Val{:obj}}, data, line)
     while length(tokens) > 0
         variable = String(pop!(tokens))
         idx = getvariableindex!(data, variable) # catch in here for malformed variables
-        coef_token = pop!(tokens)
-        try
-            coefficient = parse(Float64, coef_token)
-        catch
-            error("Unable to parse objective. Expected numeric coefficient. Got $(coef_token)")
-        end
-        if length(tokens) > 0
-            _sign = pop!(tokens)
-            if _sign == "-"
-                coefficient *= -1
-            elseif _sign == "+"
-            else
-                error("Unable to parse objective due to bad operator: $(_sign) $(line)")
-            end
-        end
+        coefficient = parsecoefficient!(tokens)
         data[:c][idx] = coefficient
     end
 end
 
-const constraintsense = Dict(
-    "<"  => :le,
-    "<=" => :le,
-    "="  => :eq,
-    "==" => :eq,
-    ">"  => :ge,
-    ">=" => :ge,
-)
+function parsequadratic!(data, line)
+    
+end
+
+function parsecoefficient!(tokens)
+    coef_token = pop!(tokens)
+    try
+        coefficient = parse(Float64, coef_token)
+    catch
+        error("Unable to parse objective. Expected numeric coefficient. Got $(coef_token)")
+    end
+    if length(tokens) > 0
+        _sign = pop!(tokens)
+        if _sign == "-"
+            coefficient *= -1
+        elseif _sign == "+"
+        else
+            error("Unable to parse objective due to bad operator: $(_sign) $(line)")
+        end
+    end
+end
 
 function parseconstraintcoefficients!(data, line, tokens, rowidx)
     # tokens should be in order (+/-) (numeric) (variable) ...
     while length(tokens) > 0
         variable = String(pop!(tokens))
         idx = getvariableindex!(data, variable) # catch in here for malformed variables
-        coef_token = pop!(tokens)
-        try
-            coefficient = parse(Float64, coef_token)
-        catch
-            error("Unable to parse constraint $(line). Expected numeric coefficient. Got $(coef_token)")
-        end
-        if length(tokens) > 0
-            _sign = pop!(tokens)
-            if _sign == "-"
-                coefficient *= -1
-            elseif _sign == "+"
-            else
-                error("Unable to parse objective due to bad operator: $(_sign) $(line)")
-            end
-        end
+        coefficient = parsecoefficient!(tokens)
         push!(data[:A].i, rowidx)
         push!(data[:A].j, idx)
         push!(data[:A].v, coefficient)
@@ -310,10 +307,10 @@ function parsesection!(::Type{Val{:bounds}}, data, line)
     ub = Inf
     if length(items) == 5 # ranged bound
         v = items[3]
-        if (items[2] == "<=" || items[2] == "<") &&  (items[4] == "<=" || items[4] == "<") # le
+        if constraintsense[items[2]] == :le && constraintsense[items[4]] == :le
             lb = parsefloat(items[1])
             ub = parsefloat(items[5])
-        elseif (items[2] == ">=" || items[2] == ">") &&  (items[4] == ">=" || items[4] == ">") # ge
+        elseif constraintsense[items[2]] == :ge && constraintsense[items[4]] == :ge
             lb = parsefloat(items[5])
             ub = parsefloat(items[1])
         else

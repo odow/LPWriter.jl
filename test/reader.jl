@@ -101,6 +101,7 @@ end
     data = LPWriter.newdatastore()
     @test_throws Exception LPWriter.parsesection!(Val{:obj}, data, "-1 x * 1 y")
 end
+
 @testset "Constraints" begin
     data = LPWriter.newdatastore()
     LPWriter.parsesection!(Val{:constraints}, data, "C1: 1.2 x - 2.4 y <= 1")
@@ -192,6 +193,24 @@ end
     # @test modelname == "TestModel"
     @test colnames == ["V$(i)" for i in variable_permutation]
     @test rownames == ["CON$i" for i in 1:4]
+end
+
+@testset "Model QP" begin
+    A, collb, colub, c, rowlb, rowub, sense, colcat, sos, Q, modelname, colnames, rownames = LPWriter.readlp("qp.lp")
+
+    @test A == Array{Float64}(0, 2)
+    @test collb == [-Inf, -Inf]
+    @test colub == [Inf, Inf]
+    @test c == [1, 2]
+    @test rowlb == Float64[]
+    @test rowub == Float64[]
+    @test sense == :Min
+    @test colcat == [:Cont, :Cont]
+    @test sos == LPWriter.SOS[]
+    @test Q == [1 0.75; 0.75 1]
+    # @test modelname == "TestModel"
+    @test colnames == ["V$(i)" for i in 1:2]
+    @test rownames == String[]
 end
 
 @testset "Tricky" begin
