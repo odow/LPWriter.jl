@@ -1,4 +1,6 @@
-function writelp(io::IO,
+_nnz(Q::AbstractMatrix) = length(Q)
+_nnz(Q::SparseMatrixCSC) = nnz(Q)
+function write(io::IO,
     A::AbstractMatrix,       # the constraint matrix
     collb::Vector,  # vector of variable lower bounds
     colub::Vector,  # vector of variable upper bounds
@@ -23,15 +25,12 @@ function writelp(io::IO,
             rownames[i] = correctname(rname)
         end
     end
-    if length(Q) != 0
+    if _nnz(Q) > 0
         error("LP writer does not support Quadratic objective")
     end
     if sense != :Max && sense != :Min
         error("sense must be either :Min or :Max. Currently sense =$(sense).")
     end
-    # if length(sos) > 0
-    #     error("LP writer does not currently support SOS constraints")
-    # end
 
     if sense == :Max
         println(io,"Maximize")

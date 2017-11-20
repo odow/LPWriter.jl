@@ -12,7 +12,7 @@ file](http://lpsolve.sourceforge.net/5.0/CPLEX-format.htm) writer.
 It has a single, user-facing, un-exported function.
 
 ```julia
-writelp(io::IO,
+LPWriter.write(io::IO,
     A::AbstractMatrix,       # the constraint matrix
     collb::Vector,           # vector of variable lower bounds
     colub::Vector,           # vector of variable upper bounds
@@ -21,7 +21,7 @@ writelp(io::IO,
     rowub::Vector,           # constraint upper bounds
     sense::Symbol,           # model sense
     colcat::Vector{Symbol},  # constraint types
-    sos::Vector{SOS},        # SOS information
+    sos::Vector{Tuple{Int, Vector{Int}, Vector{Float64}}}, # SOS information
     Q::AbstractMatrix,       #  Quadratic objective 0.5 * x' Q x
     modelname::AbstractString = "LPWriter_jl",  # LP model name
     colnames::Vector{String}  = ["V$i" for i in 1:length(c)],    # variable names
@@ -34,3 +34,9 @@ Limitations:
  - Quadratic objectives are unsupported
  - Only Integer (colcat = `:Int`), Binary (colcat = `:Bin`) and Continuous (colcat = `:Cont`)
     variables are supported.
+
+SOS are given by the Tuple `Tuple{Int, Vector{Int}, Vector{Float64}}`
+where the first index is either `1` (for SOS of type I) or `2` (for SOS of type II).
+The second index a list of the indices of the columns in the constraint matrix
+corresponding to the variables in the SOS set. The third index defines an ordering on
+the indices.

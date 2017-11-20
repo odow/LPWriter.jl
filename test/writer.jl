@@ -115,11 +115,11 @@ end
     close(io)
 end
 
-@testset "writelp" begin
+@testset "write" begin
 
     @testset "Quadratic Objectives" begin
         io = IOBuffer()
-        @test_throws Exception LPWriter.writelp(io,
+        @test_throws Exception LPWriter.write(io,
             Array{Float64}(0,0), [], [], [], [], [], :Max, Symbol[],
             LPWriter.SOS[], [1 0; 0 1])
         close(io)
@@ -127,7 +127,7 @@ end
 
     @testset "Bad sense" begin
         io = IOBuffer()
-        @test_throws Exception LPWriter.writelp(io,
+        @test_throws Exception LPWriter.write(io,
             Array{Float64}(0,0), [], [], [], [], [], :maximum, Symbol[],
             LPWriter.SOS[], Array{Float64}(0,0))
         close(io)
@@ -135,15 +135,15 @@ end
 
     # @testset "Special Ordered Sets" begin
     #     io = IOBuffer()
-    #     @test_throws Exception LPWriter.writelp(io,
+    #     @test_throws Exception LPWriter.write(io,
     #         Array{Float64}(0,0), [], [], [], [], [], :Max, Symbol[],
     #         LPWriter.SOS[LPWriter.SOS(2, [5,6,7], [1,2,3])], Array{Float64}(0,0))
     #     close(io)
     # end
 
-    @testset "writelp" begin
+    @testset "write" begin
         io = IOBuffer()
-        LPWriter.writelp(io,
+        LPWriter.write(io,
         [
         1 0 0 0 0 0 0 0;
         0 1 0 0 0 0 0 0;
@@ -171,9 +171,9 @@ end
         close(io)
     end
 
-    @testset "writelp2" begin
+    @testset "write2" begin
         io = IOBuffer()
-        LPWriter.writelp(io,
+        LPWriter.write(io,
         [
         1 0 0 0 0 0 0 0;
         0 1 0 0 0 0 0 0;
