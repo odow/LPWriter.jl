@@ -79,7 +79,7 @@ setsense!(T, data, line) = nothing
 function setsense!(::Type{Val{:obj}}, data, line)
     data[:sense] = sense_alias[lowercase(line)]
 end
-function readlp(filename::String)
+function read(filename::String)
     data = newdatastore()
     open(filename, "r") do io
         section = :none

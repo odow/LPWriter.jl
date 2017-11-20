@@ -152,7 +152,7 @@ end
 end
 
 @testset "Model 1" begin
-    A, collb, colub, c, rowlb, rowub, sense, colcat, sos, Q, modelname, colnames, rownames = LPWriter.readlp("model1.lp")
+    A, collb, colub, c, rowlb, rowub, sense, colcat, sos, Q, modelname, colnames, rownames = LPWriter.read("model1.lp")
 
     variable_permutation = [5, 4, 1, 2, 3, 7, 6, 8]
 
@@ -175,7 +175,7 @@ end
 end
 
 @testset "Model 2" begin
-    A, collb, colub, c, rowlb, rowub, sense, colcat, sos, Q, modelname, colnames, rownames = LPWriter.readlp("model2.lp")
+    A, collb, colub, c, rowlb, rowub, sense, colcat, sos, Q, modelname, colnames, rownames = LPWriter.read("model2.lp")
 
     variable_permutation = [5, 4, 1, 2, 3, 7, 6, 8]
 
@@ -195,7 +195,7 @@ end
 end
 
 @testset "Tricky" begin
-    A, collb, colub, c, rowlb, rowub, sense, colcat, sos, Q, modelname, colnames, rownames = LPWriter.readlp("model1_tricky.lp")
+    A, collb, colub, c, rowlb, rowub, sense, colcat, sos, Q, modelname, colnames, rownames = LPWriter.read("model1_tricky.lp")
 
     variable_permutation = [4, 5, 1, 2, 3, 6, 7, 8]
 
@@ -217,5 +217,5 @@ end
 end
 
 @testset "Corrrupt" begin
-    @test_throws Exception LPWriter.readlp("corrupt.lp")
+    @test_throws Exception LPWriter.read("corrupt.lp")
 end
