@@ -107,11 +107,10 @@ end
 end
 
 @testset "print_sos!" begin
-    @test_throws Exception LPWriter.SOS(3, [1,2,3], [1.0, 2.0, 3.0])
     io = IOBuffer()
-    LPWriter.print_sos!(io, "csos1", LPWriter.SOS(1, [1,2], [2.0, 4.0]), ["V1", "V2"])
+    LPWriter.print_sos!(io, "csos1", (1, [1,2], [2.0, 4.0]), ["V1", "V2"])
     @test String(take!(io)) == "csos1: S1:: V1:2 V2:4\n"
-    LPWriter.print_sos!(io, "anyname", LPWriter.SOS(2, [2,3], [2.0, 4.0]), ["V1", "V2", "X"])
+    LPWriter.print_sos!(io, "anyname", (2, [2,3], [2.0, 4.0]), ["V1", "V2", "X"])
     @test String(take!(io)) == "anyname: S2:: V2:2 X:4\n"
     close(io)
 end
@@ -159,8 +158,8 @@ end
         :Max,
         [:Cont, :Cont, :Cont, :Int, :Cont, :Cont, :Cont, :Bin],
         LPWriter.SOS[
-            LPWriter.SOS(1, [1,3,5], [1.0, 2.0, 3.0]),
-            LPWriter.SOS(2, [2,4,5], [2.0, 1.0, 2.5])
+            (1, [1,3,5], [1.0, 2.0, 3.0]),
+            (2, [2,4,5], [2.0, 1.0, 2.5])
         ],
         Array{Float64}(0,0),
         "TestModel",

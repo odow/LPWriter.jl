@@ -214,7 +214,7 @@ function parsesos!(data, line)
             push!(indices, idx)
         end
     end
-    push!(data[:sos], SOS(order, indices, weights))
+    push!(data[:sos], (order, indices, weights))
 end
 
 function parsesection!(::Type{Val{:constraints}}, data, line)

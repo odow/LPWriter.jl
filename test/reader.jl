@@ -144,7 +144,7 @@ end
     data = LPWriter.newdatastore()
     LPWriter.parsesos!(data, "c5: S1:: x:1 y:2")
     @test length(data[:sos]) == 1
-    @test data[:sos][1] == LPWriter.SOS(1, [1,2], [1.0,2.0])
+    @test data[:sos][1] == (1, [1,2], [1.0,2.0])
 
     @test_throws Exception LPWriter.parsesos!(data, "c5: S1::")
     @test_throws Exception LPWriter.parsesos!(data, "c5: S3:: x:1 y:2")
@@ -165,8 +165,8 @@ end
     @test sense == :Max
     @test colcat == [:Cont, :Cont, :Cont, :Int, :Cont, :Cont, :Cont, :Bin][variable_permutation]
     @test sos == LPWriter.SOS[
-        LPWriter.SOS(1, [3,5,1], [1.0, 2.0, 3.0]),
-        LPWriter.SOS(2, [4,2,1], [2.0, 1.0, 2.5])
+        (1, [3,5,1], [1.0, 2.0, 3.0]),
+        (2, [4,2,1], [2.0, 1.0, 2.5])
     ]
     # @test Q == Array{Float64}(0,0)
     # @test modelname == "TestModel"

@@ -165,8 +165,8 @@ function print_sos!(io, rowname::String, sos::SOS, colnames)
     # format
     # c5: S1:: col_1:1 y:2 z:3
     print(io, rowname, ": ")
-    print(io, "S", string(sos.order), "::")
-    for (index, weight) in zip(sos.indices, sos.weights)
+    print(io, "S", string(sos[1]), "::")
+    for (index, weight) in zip(sos[2], sos[3])
         print(io, " ", colnames[index], ":")
         print_shortest(io, weight)
     end
